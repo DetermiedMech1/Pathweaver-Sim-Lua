@@ -1,58 +1,45 @@
-function love.load()
-end
+local dragging = false -- Variable to track dragging state
+local dragStartX, dragStartY -- Variables to store initial mouse position on drag start
+local offsetX, offsetY = 0, 0 -- Variables to store accumulated offset during dragging
 
-function click()
-  mouseTable = {
-    primary = false,
-    secondary = false,
-    middle = false,
-  }
-
-  for i = 1, 3 do
-    mouseClick = love.mouse.isDown(i)
-    mouseTable[i] = mouseClick
+function love.mousepressed(x, y, button)
+  if button == 1 then -- Left mouse button
+    dragging = true
+    dragStartX, dragStartY = x, y
   end
-
-  return mouseTable
 end
 
-function love.mousemoved( x, y, dx, dy, istouch )
-	mouse = {
-  x = x,
-  y = y,
-  dx = dx, 
-  dy = dy,
-}
+function love.mousereleased(x, y, button)
+  if button == 1 then -- Left mouse button
+    dragging = false
+    offsetX, offsetY = offsetX + (x - dragStartX), offsetY + (y - dragStartY)
+  end
 end
 
-function love.update(dt)
-  
+function love.mousemoved(x, y, dx, dy)
+  if dragging then
+    offsetX, offsetY = offsetX + dx, offsetY + dy
+  end
 end
 
 function love.draw()
   width, height = love.graphics.getDimensions()
-  if click()[1] then
-    love.graphics.push()
-    love.graphics.translate(love.mouse.getX(), love.mouse.getY())
-  end
+  love.graphics.translate(offsetX, offsetY)
 
-  for y = -100, 100, 1 do
-    for x = -100, 100, 1 do
-      graphicsX = x * 100
-      graphicsY = y * 100
+  for y = -50, 50, 1 do
+    for x = -50, 50, 1 do
+      graphicsX = x
+      graphicsY = y
 
       love.graphics.setColor(1,1,1)
+      
+      love.graphics.print("("..graphicsX..", "..graphicsY..")", x*100, y*100)
 
-      love.graphics.print("("..graphicsX..", "..graphicsY..")", x * 100, y * 100)
 
-
-      if x == y then
-        love.graphics.circle("fill", x, y, 10)
+      if y == x^2 then
+        love.graphics.points(x, y)
       end
     end
   end
 
-  if click()[1] then
-    love.graphics.pop()
-  end
 end
