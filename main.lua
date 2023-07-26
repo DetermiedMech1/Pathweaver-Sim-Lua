@@ -1,14 +1,11 @@
 local json = require("json")
 
 function love.load()
-
-    paused = false
-
     path = {}
     scale = 50.0
 
 
-    xTranslation, yTranslation = love.graphics.getWidth()/2, love.graphics.getHeight()/2
+    xTranslation, yTranslation = 100, 400
 
     triangle = {
         x = 0,
@@ -17,7 +14,7 @@ function love.load()
         color = {255, 0, 0} -- Red color
     }
 
-    pathData = love.filesystem.read("squar.wpilib.json")
+    pathData = love.filesystem.read("figure8.wpilib.json")
     print(pathData.."\n".."\n".."\n")
     path = json.decode(pathData)
 end
@@ -29,13 +26,13 @@ function love.update(dt)
     elseif love.keyboard.isDown("lshift", "rshift") and scale >= 10 then
         scale = scale - 1
     elseif love.keyboard.isDown("up") then
-        yTranslation = yTranslation - 10/scale
+        yTranslation = yTranslation - 100/scale
     elseif love.keyboard.isDown("down") then
-        yTranslation = yTranslation + 10/scale
+        yTranslation = yTranslation + 100/scale
     elseif love.keyboard.isDown("left") then
-        xTranslation = xTranslation - 10/scale
+        xTranslation = xTranslation - 100/scale
     elseif love.keyboard.isDown("right") then
-        xTranslation = xTranslation + 10/scale
+        xTranslation = xTranslation + 100/scale
     end
 
     local currentTime = love.timer.getTime() * 2
@@ -55,7 +52,7 @@ function love.update(dt)
     local nextPoint = path[currentSegment + 1].pose.translation
 
     -- Calculate the progress within the current segment based on time
-    local segmentDuration = path[currentSegment + 1].time - path[currentSegment].time
+    local segmentDuration = (path[currentSegment + 1].time - path[currentSegment].time)
     local segmentProgress = (currentTime - path[currentSegment].time) / segmentDuration
 
     -- Calculate the position of the triangle using linear interpolation
@@ -66,14 +63,14 @@ function love.update(dt)
     triangle.rotation = path[currentSegment].pose.rotation.radians + math.pi
 
     if currentSegment == #path - 1 then
-        love.event.quit("following finished")
+        love.event.quit()
     end
 end
 
 function love.draw()
     -- Set up your drawing settings
     love.graphics.setColor(255, 255, 255)
-    love.graphics.setLineWidth(0.5)
+    love.graphics.setLineWidth(0.1)
 
     -- Adjust the coordinate system
     love.graphics.translate(xTranslation, yTranslation)
