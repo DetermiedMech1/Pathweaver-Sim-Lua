@@ -1,64 +1,79 @@
+local json = require("json")
 
-  local dragging = false -- Variable to track dragging state
-  local text = false
-  local dragStartX, dragStartY -- Variables to store initial mouse position on drag start
-  local offsetX, offsetY = 0, 0 -- Variables to store accumulated offset during dragging
+local path = {}
+local scale = 30.0
+
+local accelerationScaleFactor = 10
+
+local triangle = {
+    x = 0,
+    y = 0,
+    acceleration = 0,
+    rotation = 0,
+    color = {255, 0, 0} -- Red color
+}
 
 function love.load()
-  Scale = 100
+    local pathData = love.filesystem.read("path1.wpilib.json")
+    print(pathData.."\n".."\n".."\n")
+    path = json.decode(pathData)
 end
 
-function love.mousepressed(x, y, button)
-  if button == 1 then -- Left mouse button
-    dragging = true  
-  elseif button == 3 then
-    Scale = 100
-  end
-end
+local speedScaleFactor = 2 -- Adjust this value to scale up the speed
 
-function love.mousereleased(x, y, button)
-  if button == 1 then -- Left mouse button
-    dragging = false
-  elseif button == 2 then
-    text = not text
-  end
-end
+function love.update(dt)
+    local currentTime = love.timer.getTime()
 
-function love.mousemoved(x, y, dx, dy)
-  if dragging then
-    offsetX, offsetY = offsetX + dx, offsetY + dy
-  end
-end
+    -- Find the current segment of the path based on time
+    local currentSegment = 1
 
-function love.wheelmoved(x, y)
-  if y > 0 and Scale < 100 then
-    Scale = (Scale + 10)
-  elseif y < 0 and Scale > 10 then
-    Scale = (Scale - 10)
-  end
+    for i = 1, #path - 1 do
+        if currentTime >= path[i].time and currentTime < path[i + 1].time then
+            currentSegment = i
+            break
+        end
+        print(currentSegment)
+    end
+
+    local currentPoint = path[currentSegment].pose.translation
+    local nextPoint = path[currentSegment + 1].pose.translation
+
+    -- Calculate the progress within the current segment based on time
+    local segmentDuration = path[currentSegment + 1].time - path[currentSegment].time
+    local segmentProgress = (currentTime - path[currentSegment].time) / segmentDuration
+
+    -- Calculate the position of the triangle using linear interpolation
+    triangle.x = currentPoint.x + (nextPoint.x - currentPoint.x) * segmentProgress
+    triangle.y = currentPoint.y + (nextPoint.y - currentPoint.y) * segmentProgress
+
+    -- Set the rotation of the triangle to match the current segment's rotation
+    triangle.rotation = path[currentSegment].pose.rotation.radians + math.pi
 end
 
 function love.draw()
-  coords = {}
-  width, height = love.graphics.getDimensions()
-  love.graphics.translate(offsetX, offsetY)
-  love.graphics.scale(Scale, -Scale)
-  love.graphics.print("Scale = "..Scale, 1, 1, 0, 1*(Scale^-1), -1*(Scale^-1))
+  -- Set up your drawing settings
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.setLineWidth(0.5)
 
-  for y = -50, 50, 1 do
-    for x = -50, 50, 1 do
+  -- Adjust the coordinate system
+  love.graphics.translate(0, -30 + (path[#path].pose.translation.y+path[1].pose.translation.y)*scale)
+  love.graphics.scale(scale, -scale)
 
-      love.graphics.setColor(1,1,1)
-      if text then
-        love.graphics.print("("..x..", "..y..")", x, y, 0, 1*(Scale^-1), -1*(Scale^-1))
-      end
-      
-      for i = 0, 10, 0.1 do
-          if y+i == (x+i)^2 then
-            love.graphics.circle("fill", x+i, y+i, 10*(Scale^-1))
-          end
-      end
+  -- Draw the path
+  for i = 1, #path - 1 do
+      local currentPoint = path[i].pose.translation
+      local nextPoint = path[i + 1].pose.translation
 
-    end
+      love.graphics.line(currentPoint.x, currentPoint.y, nextPoint.x, nextPoint.y)
   end
+
+  -- Draw the colored triangle
+  ---[[
+  love.graphics.push()
+  love.graphics.translate(triangle.x, triangle.y)
+  love.graphics.rotate(triangle.rotation+math.pi/2)
+  love.graphics.setColor(triangle.color)
+  love.graphics.polygon("fill", -0.25,-0.2,0.25,-0.2,0,0.3)
+  love.graphics.pop()
+  ---]]
 end
