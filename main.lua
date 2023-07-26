@@ -2,6 +2,8 @@ local json = require("json")
 
 function love.load()
 
+    paused = false
+
     path = {}
     scale = 50.0
 
@@ -21,6 +23,21 @@ function love.load()
 end
 
 function love.update(dt)
+
+    if love.keyboard.isDown("lctrl", "rctrl") and scale <= 100 then
+        scale = scale + 1
+    elseif love.keyboard.isDown("lshift", "rshift") and scale >= 10 then
+        scale = scale - 1
+    elseif love.keyboard.isDown("up") then
+        yTranslation = yTranslation - 10/scale
+    elseif love.keyboard.isDown("down") then
+        yTranslation = yTranslation + 10/scale
+    elseif love.keyboard.isDown("left") then
+        xTranslation = xTranslation - 10/scale
+    elseif love.keyboard.isDown("right") then
+        xTranslation = xTranslation + 10/scale
+    end
+
     local currentTime = love.timer.getTime() * 2
 
     -- Find the current segment of the path based on time
@@ -58,22 +75,7 @@ function love.draw()
     love.graphics.setColor(255, 255, 255)
     love.graphics.setLineWidth(0.5)
 
-  -- Adjust the coordinate system
-
-    if love.keyboard.isDown("lctrl", "rctrl") and scale <= 100 then
-        scale = scale + 1
-    elseif love.keyboard.isDown("lshift", "rshift") and scale >= 10 then
-        scale = scale - 1
-    elseif love.keyboard.isDown("up") then
-        yTranslation = yTranslation - 10/scale
-    elseif love.keyboard.isDown("down") then
-        yTranslation = yTranslation + 10/scale
-    elseif love.keyboard.isDown("left") then
-        xTranslation = xTranslation - 10/scale
-    elseif love.keyboard.isDown("right") then
-        xTranslation = xTranslation + 10/scale
-    end
-
+    -- Adjust the coordinate system
     love.graphics.translate(xTranslation, yTranslation)
     love.graphics.scale(scale, -scale)
 
